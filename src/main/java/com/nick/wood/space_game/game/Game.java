@@ -1,24 +1,28 @@
 package com.nick.wood.space_game.game;
 
+import com.nick.wood.graphics_library_3d.Material;
 import com.nick.wood.graphics_library_3d.Window;
 import com.nick.wood.graphics_library_3d.input.Control;
 import com.nick.wood.graphics_library_3d.input.Game3DInputs;
 import com.nick.wood.graphics_library_3d.input.Inputs;
-import com.nick.wood.graphics_library_3d.objects.game_objects.RootGameObject;
-import com.nick.wood.graphics_library_3d.objects.game_objects.TransformGameObject;
+import com.nick.wood.graphics_library_3d.objects.game_objects.*;
+import com.nick.wood.graphics_library_3d.objects.mesh_objects.MeshObject;
+import com.nick.wood.graphics_library_3d.objects.mesh_objects.SphereMesh;
 import com.nick.wood.graphics_library_3d.objects.mesh_objects.TextItem;
+import com.nick.wood.maths.objects.matrix.Matrix4f;
 import com.nick.wood.maths.objects.vector.Vec3d;
 import com.nick.wood.maths.objects.vector.Vec3f;
 import com.nick.wood.physics.Body;
 import com.nick.wood.physics.SimulationInterface;
 import com.nick.wood.physics.rigid_body_dynamics_verbose.RigidBody;
+import com.nick.wood.space_game.game.components.HudController;
 import com.nick.wood.space_game.game.controls.ActionEnum;
 import com.nick.wood.space_game.game.controls.RigidBodyControl;
 
 import java.text.DecimalFormat;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.UUID;
+import java.util.*;
+
+import static com.nick.wood.graphics_library_3d.objects.game_objects.GameObjectType.TRANSFORM;
 
 public class Game implements Runnable {
 
@@ -49,6 +53,7 @@ public class Game implements Runnable {
 				inputs,
 				enableCameraView,
 				enableCameraMove);
+
 	}
 
 	@Override
@@ -59,6 +64,11 @@ public class Game implements Runnable {
 		long lastTime = System.nanoTime();
 
 		double deltaSeconds = 0.0;
+
+		if (hudController != null) {
+			hudController.buildMiniMapMesh();
+			hudController.getSlowDownTextItem().changeText("");
+		}
 
 		while (!window.shouldClose()) {
 
@@ -85,6 +95,13 @@ public class Game implements Runnable {
 							RigidBodyControl rigidBodyControl = (RigidBodyControl) game3DInputs.getControl();
 							if (rigidBodyControl.getActions().get(ActionEnum.SLOW_DOWN)) {
 								slowRigidBodyDown(rigidBody);
+								if (hudController != null) {
+									hudController.getSlowDownTextItem().changeText("SLOWING DOWN");
+								}
+							} else {
+								if (hudController != null) {
+									hudController.getSlowDownTextItem().changeText("");
+								}
 							}
 						}
 					}
@@ -100,6 +117,7 @@ public class Game implements Runnable {
 							RigidBody rigidBody = (RigidBody) body;
 							hudController.getLinearVelocityTextItem().changeText("Linear: " + formatVector(rigidBody.getVelocity()));
 							hudController.getAngularVelocityTextItem().changeText("Angular: " + formatVector(rigidBody.getAngularVelocity()));
+							hudController.passPlayerInverseTransform(Matrix4f.InverseTransformation((Vec3f) rigidBody.getOrigin().toVecf(), rigidBody.getRotation().toMatrix().toMatrix4f(), Vec3f.ONE));
 						}
 					}
 				}
@@ -110,7 +128,11 @@ public class Game implements Runnable {
 
 			mapToGameObjects(rootGameObjects, simulation.getBodies());
 
-			window.loop();
+			if (hudController != null) {
+				hudController.createMiniMap(simulation.getBodies());
+			}
+
+			window.loop(hudController.getMiniMapMeshes(), hudController.getHudLights());
 
 			lastTime = now;
 
@@ -142,11 +164,7 @@ public class Game implements Runnable {
 		Vec3d linearMomentum = rigidBody.getLinearMomentum();
 		double mass = rigidBody.getMass();
 		Vec3d linearForce = linearMomentum.scale(mass);
-		if (linearForce.length2() < 5) {
-			rigidBody.addForce(linearForce.neg());
-		} else {
-			rigidBody.addForce(linearForce.scale(-0.5));
-		}
+		rigidBody.addForce(linearForce.scale(-5));
 
 		Vec3d angularMomentum = rigidBody.getAngularMomentum();
 

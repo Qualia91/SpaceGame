@@ -17,14 +17,12 @@ import com.nick.wood.physics.SimulationInterface;
 import com.nick.wood.physics.rigid_body_dynamics_verbose.RigidBody;
 import com.nick.wood.physics.rigid_body_dynamics_verbose.RigidBodyType;
 import com.nick.wood.physics.rigid_body_dynamics_verbose.forces.GravityBasic;
+import com.nick.wood.space_game.game.components.HudController;
 import com.nick.wood.space_game.game.controls.RigidBodyControl;
 import com.nick.wood.physics.rigid_body_dynamics_verbose.forces.Drag;
 import com.nick.wood.physics.rigid_body_dynamics_verbose.forces.Force;
 
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.Random;
-import java.util.UUID;
+import java.util.*;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
@@ -258,8 +256,7 @@ class SimulationTest {
 		for (RigidBody rigidBody : rigidBodies) {
 			RootGameObject rootGameObject = convertToGameObject(rigidBody, "/textures/white.png");
 			TransformGameObject transformGameObjectLaser = (TransformGameObject) rootGameObject.getGameObjectNodeData().getChildren().get(0);
-			MeshObject meshGroupLaser = new SphereMesh(10, new Material("/textures/white.png"), false);
-			createLaserUnderTransform(new Vec3f(1.0f, 1.0f, 1.0f), Vec3f.ZERO, meshGroupLaser, transformGameObjectLaser);
+			createLaserUnderTransform(new Vec3f(1.0f, 1.0f, 1.0f), Vec3f.ZERO, transformGameObjectLaser);
 			rootGameObjectHashMap.put(rigidBody.getUuid(), rootGameObject);
 		}
 
@@ -337,8 +334,7 @@ class SimulationTest {
 		for (RigidBody rigidBody : rigidBodies) {
 			RootGameObject rootGameObject = convertToGameObject(rigidBody, "/textures/white.png");
 			TransformGameObject transformGameObjectLaser = (TransformGameObject) rootGameObject.getGameObjectNodeData().getChildren().get(0);
-			MeshObject meshGroupLaser = new SphereMesh(10, new Material("/textures/texture.png"), false);
-			createLaserUnderTransform(new Vec3f(1.0f, 1.0f, 1.0f), Vec3f.ZERO, meshGroupLaser, transformGameObjectLaser);
+			createLaserUnderTransform(new Vec3f(1.0f, 1.0f, 1.0f), Vec3f.ZERO, transformGameObjectLaser);
 
 			control = new RigidBodyControl(100 * rigidBody.getMass(), 1 * Math.sqrt(rigidBody.getMass()), rigidBody.getUuid());
 
@@ -441,6 +437,7 @@ class SimulationTest {
 	void bigBangWithPlayer() throws ExecutionException, InterruptedException {
 
 		ArrayList<RigidBody> rigidBodies = new ArrayList<>();
+		ArrayList<UUID> toRender = new ArrayList<>();
 
 		ArrayList<Force> forces = new ArrayList<>();
 		ArrayList<Force> forces2 = new ArrayList<>();
@@ -454,6 +451,7 @@ class SimulationTest {
 					Vec3d mom = Vec3d.X.scale(-i*10).add(Vec3d.Y.scale(-j*10)).add(Vec3d.Z.scale(-k*10));
 					Vec3d angMom = Vec3d.X.scale(random.nextInt(10) - 4).add(Vec3d.Y.scale(random.nextInt(10) - 4)).add(Vec3d.Z.scale(random.nextInt(10) - 4));
 					UUID uuid = UUID.randomUUID();
+					toRender.add(uuid);
 					RigidBody rigidBody = new RigidBody(uuid, 1, new Vec3d(1.0, 1.0, 1.0), new Vec3d(i * 10, j * 10, k*10), new Quaternion(1.0, 0.0, 0.0, 0.0), mom, angMom.scale(0.02), RigidBodyType.SPHERE, forces2);
 					rigidBodies.add(rigidBody);
 				}
@@ -464,8 +462,7 @@ class SimulationTest {
 		RigidBody rigidBody = new RigidBody(playerUUID, 1, new Vec3d(1.0, 1.0, 1.0), new Vec3d(-50, 0, 0), new Quaternion(1.0, 0.0, 0.0, 0.0), Vec3d.ZERO, Vec3d.ZERO, RigidBodyType.SPHERE, forces);
 		RootGameObject rootGameObject = convertToGameObject(rigidBody, "/textures/white.png");
 		TransformGameObject transformGameObjectLaser = (TransformGameObject) rootGameObject.getGameObjectNodeData().getChildren().get(0);
-		MeshObject meshGroupLaser = new SphereMesh(10, new Material("/textures/texture.png"), false);
-		createLaserUnderTransform(new Vec3f(1.0f, 1.0f, 1.0f), Vec3f.ZERO, meshGroupLaser, transformGameObjectLaser);
+		createLaserUnderTransform(new Vec3f(1.0f, 1.0f, 1.0f), Vec3f.ZERO, transformGameObjectLaser);
 		rigidBodies.add(rigidBody);
 		Control control = new RigidBodyControl(100 * rigidBody.getMass(), 1 * Math.sqrt(rigidBody.getMass()), rigidBody.getUuid());
 
@@ -487,15 +484,18 @@ class SimulationTest {
 
 		createArena(rigidBodies, rootGameObjectHashMap, forces, 500);
 
+		HudController hudController = createHud(cameraGameObject, playerUUID, toRender);
+
 		rootGameObjectHashMap.put(playerUUID, rootGameObject);
 
 		rootGameObjectHashMap.put(UUID.randomUUID(), lightRootObject);
 
 		SimulationInterface simulation = new com.nick.wood.physics.rigid_body_dynamics_verbose.Simulation(rigidBodies);
 
-		Game game = new Game(1000, 800, simulation, false, false, rootGameObjectHashMap, inputs);
-
+		Game game = new Game(1200, 1000, simulation, false, false, rootGameObjectHashMap, inputs);
 		game.setController(control);
+		game.addHudController(hudController);
+
 		ExecutorService executor = Executors.newFixedThreadPool(4);
 
 		Future<?> submit = executor.submit(game);
@@ -569,6 +569,7 @@ class SimulationTest {
 	void game() throws ExecutionException, InterruptedException {
 
 		ArrayList<RigidBody> rigidBodies = new ArrayList<>();
+		ArrayList<UUID> toRender = new ArrayList<>();
 		HashMap<UUID, RootGameObject> rootGameObjectHashMap = new HashMap<>();
 		ArrayList<Force> forces = new ArrayList<>();
 		forces.add(new Drag(-0.1));
@@ -578,6 +579,7 @@ class SimulationTest {
 
 		// ball
 		UUID uuid = UUID.randomUUID();
+		toRender.add(uuid);
 		Vec3d mom = Vec3d.ZERO;
 		Vec3d angMom = Vec3d.Z;
 		RigidBody rigidBodyBall = new RigidBody(uuid, 1, new Vec3d(5, 5, 5), new Vec3d(0, 0, 0), new Quaternion(1.0, 0.0, 0.0, 0.0), mom, angMom, RigidBodyType.SPHERE, forces);
@@ -590,26 +592,12 @@ class SimulationTest {
 		RigidBody playerRigidBody = new RigidBody(playerUUID, playerMass, new Vec3d(1.0, 1.0, 1.0), new Vec3d(-40, 0, 0), new Quaternion(1.0, 0.0, 0.0, 0.0), Vec3d.ZERO, Vec3d.ZERO, RigidBodyType.SPHERE, forces);
 		RootGameObject rootGameObject = convertToGameObject(playerRigidBody, "/textures/white.png");
 		TransformGameObject transformGameObjectLaser = (TransformGameObject) rootGameObject.getGameObjectNodeData().getChildren().get(0);
-		MeshObject meshGroupLaser = new SphereMesh(2, new Material("/textures/white.png"), true);
-		createLaserUnderTransform(new Vec3f(1.0f, 1.0f, 1.0f), Vec3f.ZERO, meshGroupLaser, transformGameObjectLaser);
+		createLaserUnderTransform(new Vec3f(1.0f, 1.0f, 1.0f), Vec3f.ZERO, transformGameObjectLaser);
 		rigidBodies.add(playerRigidBody);
 		Camera camera = new Camera(new Vec3f(-5.0f, 0.0f, 1.0f), new Vec3f(0.0f, 0.0f, 0.0f), 0.5f, 0.1f);
 		CameraGameObject cameraGameObject = new CameraGameObject(transformGameObjectLaser, camera, CameraType.PRIMARY);
 
-
-		Transform hudTransform = new Transform(
-				new Vec3f(-2, 2.5f, -1),
-				new Vec3f(1, 2, 1),
-				Matrix4f.Rotation(-90, Vec3f.X).multiply(Matrix4f.Rotation(-20, Vec3f.Z))
-		);
-		TransformGameObject hudTransformGameObject = new TransformGameObject(cameraGameObject, hudTransform);
-
-
-		TextItem linearTextItem = createHudItem(hudTransformGameObject, Vec3f.Y.scale(0.1f));
-		TextItem angularTextItem = createHudItem(hudTransformGameObject, Vec3f.ZERO);
-
-
-		HudController hudController = new HudController(linearTextItem, angularTextItem, playerUUID);
+		HudController hudController = createHud(cameraGameObject, playerUUID, toRender);
 
 		rootGameObjectHashMap.put(playerUUID, rootGameObject);
 
@@ -633,6 +621,35 @@ class SimulationTest {
 
 		// closes executor service
 		executor.shutdown();
+	}
+
+	private HudController createHud(GameObjectNode cameraGameObject, UUID playerUUID, ArrayList<UUID> toRender) {
+		Transform hudTransformLeft = new Transform(
+				new Vec3f(-2, 2.5f, -1),
+				new Vec3f(1, 2, 1),
+				Matrix4f.Rotation(-90, Vec3f.X).multiply(Matrix4f.Rotation(-20, Vec3f.Z))
+		);
+		TransformGameObject hudTransformGameObjectLeft = new TransformGameObject(cameraGameObject, hudTransformLeft);
+
+		TextItem linearTextItem = createHudItem(hudTransformGameObjectLeft, Vec3f.Y.scale(0.1f));
+		TextItem angularTextItem = createHudItem(hudTransformGameObjectLeft, Vec3f.ZERO);
+
+		Transform hudTransformTopMiddle = new Transform(
+				new Vec3f(-2, 0.8f, 2.8f),
+				new Vec3f(2, 4, 2),
+				Matrix4f.Rotation(-90, Vec3f.X)
+		);
+		TransformGameObject hudTransformGameObjectTopMiddle = new TransformGameObject(cameraGameObject, hudTransformTopMiddle);
+		TextItem slowDownTextItem = createHudItem(hudTransformGameObjectTopMiddle, Vec3f.ZERO);
+
+		Transform hudTransformRight = new Transform(
+				new Vec3f(-3,-1.2f,0),
+				new Vec3f(0.05f,0.05f,0.05f),
+				Matrix4f.Rotation(20, Vec3f.Z)
+		);
+		TransformGameObject hudTransformGameObjectRight = new TransformGameObject(cameraGameObject, hudTransformRight);
+
+		return new HudController(linearTextItem, angularTextItem, slowDownTextItem, hudTransformGameObjectRight, playerUUID, toRender);
 	}
 
 	public TextItem createHudItem(GameObjectNode gameObjectNode, Vec3f pos) {
@@ -824,7 +841,7 @@ class SimulationTest {
 		);
 	}
 
-	private void createLaserUnderTransform(Vec3f colour, Vec3f pos, MeshObject meshGroupLight, TransformGameObject transformGameObject) {
+	private void createLaserUnderTransform(Vec3f colour, Vec3f pos, TransformGameObject transformGameObject) {
 		PointLight pointLight = new PointLight(
 				colour,
 				500);
@@ -840,10 +857,6 @@ class SimulationTest {
 
 		TransformGameObject transformGameObject1 = new TransformGameObject(transformGameObject, lightGameObjectTransform);
 		LightGameObject lightGameObject = new LightGameObject(transformGameObject1, light);
-		MeshGameObject meshGameObject = new MeshGameObject(
-				transformGameObject1,
-				meshGroupLight
-		);
 	}
 
 	private void createLightUnderTransform(Vec3f colour, Vec3f pos, MeshObject meshGroupLight, TransformGameObject transformGameObject, float intensity) {
