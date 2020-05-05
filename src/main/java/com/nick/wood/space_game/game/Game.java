@@ -1,14 +1,12 @@
 package com.nick.wood.space_game.game;
 
-import com.nick.wood.graphics_library_3d.Material;
 import com.nick.wood.graphics_library_3d.Window;
+import com.nick.wood.graphics_library_3d.input.ActionEnum;
 import com.nick.wood.graphics_library_3d.input.Control;
-import com.nick.wood.graphics_library_3d.input.Game3DInputs;
+import com.nick.wood.graphics_library_3d.input.GameControlsManager;
 import com.nick.wood.graphics_library_3d.input.Inputs;
-import com.nick.wood.graphics_library_3d.objects.game_objects.*;
-import com.nick.wood.graphics_library_3d.objects.mesh_objects.MeshObject;
-import com.nick.wood.graphics_library_3d.objects.mesh_objects.SphereMesh;
-import com.nick.wood.graphics_library_3d.objects.mesh_objects.TextItem;
+import com.nick.wood.graphics_library_3d.objects.Camera;
+import com.nick.wood.graphics_library_3d.objects.scene_graph_objects.*;
 import com.nick.wood.maths.objects.matrix.Matrix4f;
 import com.nick.wood.maths.objects.vector.Vec3d;
 import com.nick.wood.maths.objects.vector.Vec3f;
@@ -16,30 +14,29 @@ import com.nick.wood.physics.Body;
 import com.nick.wood.physics.SimulationInterface;
 import com.nick.wood.physics.rigid_body_dynamics_verbose.RigidBody;
 import com.nick.wood.space_game.game.components.HudController;
-import com.nick.wood.space_game.game.controls.ActionEnum;
+import com.nick.wood.space_game.game.controls.RigidBodyActionEnum;
 import com.nick.wood.space_game.game.controls.RigidBodyControl;
 
 import java.text.DecimalFormat;
 import java.util.*;
-
-import static com.nick.wood.graphics_library_3d.objects.game_objects.GameObjectType.TRANSFORM;
 
 public class Game implements Runnable {
 
 	private final SimulationInterface simulation;
 	private double simHerts = 60;
 	private final Window window;
-	private final HashMap<UUID, RootGameObject> rootGameObjects;
+	private final HashMap<UUID, SceneGraph> rootGameObjects;
 	private final Inputs inputs;
-	private Game3DInputs game3DInputs = null;
+	private GameControlsManager gameControlsManager = null;
 	private HudController hudController;
+	private UUID cameraUUID;
 
 	public Game(int width,
 	            int height,
 	            SimulationInterface simulation,
 	            boolean enableCameraView,
 	            boolean enableCameraMove,
-	            HashMap<UUID, RootGameObject> rootGameObjects,
+	            HashMap<UUID, SceneGraph> rootGameObjects,
 	            Inputs inputs) {
 
 		this.rootGameObjects = rootGameObjects;
@@ -49,11 +46,36 @@ public class Game implements Runnable {
 				width,
 				height,
 				"",
-				rootGameObjects,
 				inputs,
 				enableCameraView,
 				enableCameraMove);
 
+		// find primary camera
+		for (Map.Entry<UUID, SceneGraph> uuidRootGameObjectEntry : rootGameObjects.entrySet()) {
+			Camera camera = getPrimaryCamera(uuidRootGameObjectEntry.getValue(), null);
+			if (camera != null) {
+				break;
+			}
+		}
+	}
+
+
+	private Camera getPrimaryCamera(SceneGraphNode sceneGraphNode, Camera camera) {
+		for (SceneGraphNode child : sceneGraphNode.getSceneGraphNodeData().getChildren()) {
+			if (child instanceof CameraSceneGraph) {
+				CameraSceneGraph cameraGameObject = (CameraSceneGraph) child;
+				if (cameraGameObject.getCameraType() == CameraType.PRIMARY) {
+					cameraUUID = cameraGameObject.getSceneGraphNodeData().getUuid();
+					return cameraGameObject.getCamera();
+				}
+			} else {
+				Camera newCamera = getPrimaryCamera(child, camera);
+				if (newCamera != null) {
+					return newCamera;
+				}
+			}
+		}
+		return camera;
 	}
 
 	@Override
@@ -78,22 +100,23 @@ public class Game implements Runnable {
 
 			while (deltaSeconds >= 1 / simHerts) {
 
-				if (game3DInputs != null) {
+				if (gameControlsManager != null) {
 
-					game3DInputs.getControl().reset();
+					gameControlsManager.getControl().reset();
 
 					for (Body body : simulation.getBodies()) {
-						if (game3DInputs.getControl().getUuid().equals(body.getUuid())) {
+						if (gameControlsManager.getControl().getUuid().equals(body.getUuid())) {
 
-							game3DInputs.checkInputs();
 
 							RigidBody rigidBody = (RigidBody) body;
+							gameControlsManager.getControl().setObjectBeingControlled(rigidBody);
+							gameControlsManager.checkInputs();
 
-							rigidBody.addForce(rigidBody.getRotation().toMatrix().rotate((Vec3d) game3DInputs.getControl().getForce()));
-							rigidBody.addTorque(rigidBody.getRotation().toMatrix().rotate((Vec3d) game3DInputs.getControl().getTorque()));
+							RigidBodyControl rigidBodyControl = (RigidBodyControl) gameControlsManager.getControl();
 
-							RigidBodyControl rigidBodyControl = (RigidBodyControl) game3DInputs.getControl();
-							if (rigidBodyControl.getActions().get(ActionEnum.SLOW_DOWN)) {
+							rigidBodyControl.apply(rigidBody);
+
+							if (rigidBodyControl.getActions().get(RigidBodyActionEnum.SLOW_DOWN)) {
 								slowRigidBodyDown(rigidBody);
 								if (hudController != null) {
 									hudController.getSlowDownTextItem().changeText("SLOWING DOWN");
@@ -128,11 +151,11 @@ public class Game implements Runnable {
 
 			mapToGameObjects(rootGameObjects, simulation.getBodies());
 
-			if (hudController != null) {
-				hudController.createMiniMap(simulation.getBodies());
-			}
+			//if (hudController != null) {
+			//	hudController.createMiniMap(simulation.getBodies());
+			//}
 
-			window.loop(hudController.getMiniMapMeshes(), hudController.getHudLights());
+			window.loop(rootGameObjects, hudController.getHud(), cameraUUID);
 
 			lastTime = now;
 
@@ -148,11 +171,11 @@ public class Game implements Runnable {
 		return df2.format(vec3d.getX()) + ", " + df2.format(vec3d.getY()) + ", " + df2.format(vec3d.getZ());
 	}
 
-	private void mapToGameObjects(HashMap<UUID, RootGameObject> gameObjects, ArrayList<? extends Body> rigidBodies) {
+	private void mapToGameObjects(HashMap<UUID, SceneGraph> gameObjects, ArrayList<? extends Body> rigidBodies) {
 
 		for (Body body : rigidBodies) {
 
-			TransformGameObject transformGameObject = (TransformGameObject) gameObjects.get(body.getUuid()).getGameObjectNodeData().getChildren().get(0);
+			TransformSceneGraph transformGameObject = (TransformSceneGraph) gameObjects.get(body.getUuid()).getSceneGraphNodeData().getChildren().get(0);
 			transformGameObject.setPosition((Vec3f) body.getOrigin().toVecf());
 			transformGameObject.setRotation(body.getRotation().toMatrix().toMatrix4f());
 
@@ -177,7 +200,7 @@ public class Game implements Runnable {
 
 	public void setController(Control control) {
 
-		this.game3DInputs = new Game3DInputs(inputs, control);
+		this.gameControlsManager = new GameControlsManager(inputs, control);
 	}
 
 	public void addHudController(HudController hudController) {

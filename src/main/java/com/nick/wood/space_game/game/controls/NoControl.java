@@ -83,13 +83,8 @@ public class NoControl implements Control {
 	}
 
 	@Override
-	public Vec getForce() {
-		return Vec3d.ZERO;
-	}
+	public void setObjectBeingControlled(Object objectBeingControlled) {
 
-	@Override
-	public Vec getTorque() {
-		return Vec3d.ZERO;
 	}
 
 	public UUID getUuid() {

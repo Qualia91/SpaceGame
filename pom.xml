@@ -39,6 +39,18 @@
             <version>1.0</version>
             <scope>compile</scope>
         </dependency>
+        <dependency>
+            <groupId>com.nick.wood.graphics_library</groupId>
+            <artifactId>GraphicsLibrary</artifactId>
+            <version>1.0</version>
+            <scope>compile</scope>
+        </dependency>
+        <dependency>
+            <groupId>com.nick.wood.rigid_body_dynamics</groupId>
+            <artifactId>RigidBodyDynamics</artifactId>
+            <version>1.0</version>
+            <scope>compile</scope>
+        </dependency>
     </dependencies>
 
     <packaging>jar</packaging>

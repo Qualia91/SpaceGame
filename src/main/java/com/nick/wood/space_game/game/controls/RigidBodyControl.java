@@ -2,8 +2,8 @@ package com.nick.wood.space_game.game.controls;
 
 import com.nick.wood.graphics_library_3d.input.Control;
 import com.nick.wood.maths.objects.vector.Vec3d;
+import com.nick.wood.physics.rigid_body_dynamics_verbose.RigidBody;
 
-import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.UUID;
 
@@ -14,19 +14,19 @@ public class RigidBodyControl implements Control {
 	private final UUID controlledRigidBodyUUID;
 	private Vec3d force = Vec3d.ZERO;
 	private Vec3d torque = Vec3d.ZERO;
-	private final HashMap<ActionEnum, Boolean> actions = new HashMap<>();
+	private final HashMap<RigidBodyActionEnum, Boolean> actions = new HashMap<>();
 
 	public RigidBodyControl(double linearForce, double angularForce, UUID controlledRigidBodyUUID) {
 		this.linearForce = linearForce;
 		this.angularForce = angularForce;
 		this.controlledRigidBodyUUID = controlledRigidBodyUUID;
-		this.actions.put(ActionEnum.SLOW_DOWN, false);
+		this.actions.put(RigidBodyActionEnum.SLOW_DOWN, false);
 	}
 
 	public void reset() {
 		force = Vec3d.ZERO;
 		torque = Vec3d.ZERO;
-		this.actions.put(ActionEnum.SLOW_DOWN, false);
+		this.actions.put(RigidBodyActionEnum.SLOW_DOWN, false);
 	}
 
 	public void mouseMove(double dx, double dy, boolean shiftPressed) {
@@ -79,14 +79,24 @@ public class RigidBodyControl implements Control {
 	}
 
 	public void action() {
-		this.actions.put(ActionEnum.SLOW_DOWN, true);
+		this.actions.put(RigidBodyActionEnum.SLOW_DOWN, true);
+	}
+
+	@Override
+	public void setObjectBeingControlled(Object objectBeingControlled) {
+
 	}
 
 	public UUID getUuid() {
 		return controlledRigidBodyUUID;
 	}
 
-	public HashMap<ActionEnum, Boolean> getActions() {
+	public HashMap<RigidBodyActionEnum, Boolean> getActions() {
 		return actions;
+	}
+
+	public void apply(RigidBody rigidBody) {
+		rigidBody.addForce(rigidBody.getRotation().toMatrix().rotate(force));
+		rigidBody.addTorque(rigidBody.getRotation().toMatrix().rotate(torque));
 	}
 }
