@@ -73,10 +73,11 @@ public class HudController {
 
 		// find rigid body to center on first
 		Vec3d centerOnPosition = Vec3d.ZERO;
+		Matrix4f centerOnOrientation = Matrix4f.Identity;
 		for (Body rootGameObject : rootGameObjects) {
 			if (rootGameObject.getUuid().equals(centerMiniMapOn)) {
 				centerOnPosition = (Vec3d) rootGameObject.getOrigin();
-
+				centerOnOrientation = rootGameObject.getRotation().inverse().toMatrix().toMatrix4f();
 				MeshSceneGraph meshSceneGraph = new MeshSceneGraph(hud.getHudTransformGameObjectRight(), miniMapPlayerMesh);
 
 				LightSceneGraph lightSceneGraph = new LightSceneGraph(
@@ -100,7 +101,7 @@ public class HudController {
 					if (distanceAway < MAX_DIST) {
 
 						Transform transform = new Transform(
-								vectorToEnemy,
+								centerOnOrientation.multiply(vectorToEnemy),
 								Vec3f.ONE.scale((MAX_DIST - distanceAway) / MAX_DIST),
 								rootGameObject.getRotation().toMatrix().toMatrix4f()
 						);
