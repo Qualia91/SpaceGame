@@ -50,13 +50,6 @@ public class Game implements Runnable {
 				enableCameraView,
 				enableCameraMove);
 
-		// find primary camera
-		for (Map.Entry<UUID, SceneGraph> uuidRootGameObjectEntry : rootGameObjects.entrySet()) {
-			Camera camera = getPrimaryCamera(uuidRootGameObjectEntry.getValue(), null);
-			if (camera != null) {
-				break;
-			}
-		}
 	}
 
 
@@ -83,13 +76,21 @@ public class Game implements Runnable {
 
 		window.init();
 
+		// find primary camera
+		for (Map.Entry<UUID, SceneGraph> uuidRootGameObjectEntry : rootGameObjects.entrySet()) {
+			Camera camera = getPrimaryCamera(uuidRootGameObjectEntry.getValue(), null);
+			if (camera != null) {
+				break;
+			}
+		}
+
 		long lastTime = System.nanoTime();
 
 		double deltaSeconds = 0.0;
 
 		if (hudController != null) {
 			hudController.buildMiniMapMesh();
-			hudController.getSlowDownTextItem().changeText("");
+			hudController.getHud().getInformationTextItem().changeText("");
 		}
 
 		while (!window.shouldClose()) {
@@ -100,6 +101,8 @@ public class Game implements Runnable {
 
 			while (deltaSeconds >= 1 / simHerts) {
 
+				simulation.iterate(deltaSeconds);
+
 				if (gameControlsManager != null) {
 
 					gameControlsManager.getControl().reset();
@@ -107,40 +110,41 @@ public class Game implements Runnable {
 					for (Body body : simulation.getBodies()) {
 						if (gameControlsManager.getControl().getUuid().equals(body.getUuid())) {
 
-
 							RigidBody rigidBody = (RigidBody) body;
 							gameControlsManager.getControl().setObjectBeingControlled(rigidBody);
 							gameControlsManager.checkInputs();
 
 							RigidBodyControl rigidBodyControl = (RigidBodyControl) gameControlsManager.getControl();
 
+							if (hudController != null) {
+								hudController.getHud().getHudTransformObject().setPosition((Vec3f) rigidBody.getOrigin().toVecf());
+								hudController.getHud().getHudTransformObject().setRotation(rigidBody.getRotation().toMatrix().toMatrix4f());
+							}
+
 							rigidBodyControl.apply(rigidBody);
 
 							if (rigidBodyControl.getActions().get(RigidBodyActionEnum.SLOW_DOWN)) {
 								slowRigidBodyDown(rigidBody);
 								if (hudController != null) {
-									hudController.getSlowDownTextItem().changeText("SLOWING DOWN");
+									hudController.getHud().getInformationTextItem().changeText("SLOWING DOWN");
 								}
 							} else {
 								if (hudController != null) {
-									hudController.getSlowDownTextItem().changeText("");
+									hudController.getHud().getInformationTextItem().changeText("");
 								}
 							}
 						}
 					}
 				}
 
-				simulation.iterate(deltaSeconds);
-
 				window.setTitle("Iteration time: " + deltaSeconds);
 
 				if (hudController != null) {
 					for (Body body : simulation.getBodies()) {
-						if (body.getUuid().equals(hudController.getRigidBodyUUID())) {
+						if (body.getUuid().equals(hudController.getCenterMiniMapOn())) {
 							RigidBody rigidBody = (RigidBody) body;
-							hudController.getLinearVelocityTextItem().changeText("Linear: " + formatVector(rigidBody.getVelocity()));
-							hudController.getAngularVelocityTextItem().changeText("Angular: " + formatVector(rigidBody.getAngularVelocity()));
-							hudController.passPlayerInverseTransform(Matrix4f.InverseTransformation((Vec3f) rigidBody.getOrigin().toVecf(), rigidBody.getRotation().toMatrix().toMatrix4f(), Vec3f.ONE));
+							hudController.getHud().getLinearTextItem().changeText("Linear: " + formatVector(rigidBody.getVelocity()));
+							hudController.getHud().getAngularTextItem().changeText("Angular: " + formatVector(rigidBody.getAngularVelocity()));
 						}
 					}
 				}
@@ -151,11 +155,14 @@ public class Game implements Runnable {
 
 			mapToGameObjects(rootGameObjects, simulation.getBodies());
 
-			//if (hudController != null) {
-			//	hudController.createMiniMap(simulation.getBodies());
-			//}
+			HashMap<UUID, SceneGraph> map = new HashMap<>();
+			if (hudController != null) {
+				hudController.createMiniMap(simulation.getBodies());
+				map = hudController.getHud().getRootGameObjectHashMap();
+			}
 
-			window.loop(rootGameObjects, hudController.getHud(), cameraUUID);
+
+			window.loop(rootGameObjects, map, cameraUUID);
 
 			lastTime = now;
 

@@ -9,7 +9,7 @@ public class Main {
 		SimulationTest simulationTest = new SimulationTest();
 
 		try {
-			simulationTest.game();
+			simulationTest.bigBangWithPlayer();
 		} catch (ExecutionException | InterruptedException e) {
 			e.printStackTrace();
 		}
