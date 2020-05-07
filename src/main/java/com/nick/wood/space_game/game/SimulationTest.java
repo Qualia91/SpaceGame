@@ -10,6 +10,7 @@ import com.nick.wood.graphics_library_3d.objects.Camera;
 import com.nick.wood.graphics_library_3d.objects.Transform;
 import com.nick.wood.graphics_library_3d.objects.scene_graph_objects.*;
 import com.nick.wood.graphics_library_3d.objects.mesh_objects.*;
+import com.nick.wood.hla_game_controller.HlaInput;
 import com.nick.wood.maths.objects.Quaternion;
 import com.nick.wood.maths.objects.matrix.Matrix4f;
 import com.nick.wood.maths.objects.vector.Vec3d;
@@ -19,7 +20,6 @@ import com.nick.wood.physics.rigid_body_dynamics_verbose.RigidBody;
 import com.nick.wood.physics.rigid_body_dynamics_verbose.RigidBodyType;
 import com.nick.wood.physics.rigid_body_dynamics_verbose.forces.GravityBasic;
 import com.nick.wood.space_game.game.components.HudController;
-import com.nick.wood.space_game.game.controls.ExternalInput;
 import com.nick.wood.space_game.game.controls.HlaGameControlManager;
 import com.nick.wood.space_game.game.controls.RigidBodyControl;
 import com.nick.wood.physics.rigid_body_dynamics_verbose.forces.Drag;
@@ -538,17 +538,18 @@ class SimulationTest {
 		LWJGLGameControlManager lwjglGameControlManagerRigidBody = new LWJGLGameControlManager(graphicsLibraryInput, rigidBodyControl);
 		LWJGLGameControlManager lwjglGameControlManagerCameraView = new LWJGLGameControlManager(graphicsLibraryInput, cameraViewControl);
 
-		ExternalInput externalInput = new ExternalInput();
+		HlaInput externalInput = new HlaInput();
 		HlaGameControlManager hlaGameControlManager = new HlaGameControlManager(externalInput, ballControl);
+		game.addController(hlaGameControlManager);
 
 		game.addController(lwjglGameControlManagerRigidBody);
 		game.addController(lwjglGameControlManagerCameraView);
-		game.addController(hlaGameControlManager);
 		game.addHudController(hudController);
 
 		ExecutorService executor = Executors.newFixedThreadPool(4);
 
 		Future<?> submit = executor.submit(game);
+
 
 		// waits for game to finish
 		submit.get();

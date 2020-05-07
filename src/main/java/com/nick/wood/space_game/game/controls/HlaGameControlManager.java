@@ -2,20 +2,20 @@ package com.nick.wood.space_game.game.controls;
 
 import com.nick.wood.game_control.input.Control;
 import com.nick.wood.game_control.input.ControlManager;
+import com.nick.wood.hla_game_controller.Command;
+import com.nick.wood.hla_game_controller.HlaInput;
 
-public class HlaGameControlManager implements ControlManager<ExternalInput> {
+public class HlaGameControlManager implements ControlManager<HlaInput> {
 
-	private ExternalInput input;
+	private HlaInput input;
 	private Control control;
-	private double oldMouseX = 0.0;
-	private double oldMouseY = 0.0;
 
-	public HlaGameControlManager(ExternalInput input, Control control) {
+	public HlaGameControlManager(HlaInput input, Control control) {
 		this.input = input;
 		this.control = control;
 	}
 
-	public ExternalInput getInput() {
+	public HlaInput getInput() {
 		return input;
 	}
 
@@ -31,7 +31,7 @@ public class HlaGameControlManager implements ControlManager<ExternalInput> {
 
 	}
 
-	public void setInputs(ExternalInput input) {
+	public void setInputs(HlaInput input) {
 		this.input = input;
 	}
 
