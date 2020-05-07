@@ -32,14 +32,14 @@ public class Hud {
 
 		Transform hudTransform = new Transform(
 				new Vec3f(0, 0,  0),
-				new Vec3f(1, 1, 1),
+				Vec3f.ONE,
 				Matrix4f.Identity
 		);
 
 		this.hudTransformObject = new TransformSceneGraph(sceneGraph, hudTransform);
 
 		Transform hudTransformLeft = new Transform(
-				new Vec3f(-2, 2.5f, -1),
+				new Vec3f(-2, 2f, -1),
 				new Vec3f(1, 2, 1),
 				Matrix4f.Rotation(-90, Vec3f.X).multiply(Matrix4f.Rotation(-20, Vec3f.Z))
 		);
@@ -57,7 +57,7 @@ public class Hud {
 		this.informationTextItem = createHudItem(hudTransformGameObjectTopMiddle, Vec3f.ZERO);
 
 		Transform hudTransformRight = new Transform(
-				new Vec3f(-3, -1.2f, 0),
+				new Vec3f(-3, -1f, 0),
 				new Vec3f(0.05f, 0.05f, 0.05f),
 				Matrix4f.Rotation(20, Vec3f.Z)
 		);

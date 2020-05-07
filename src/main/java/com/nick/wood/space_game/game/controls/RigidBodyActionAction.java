@@ -1,6 +1,6 @@
 package com.nick.wood.space_game.game.controls;
 
-import com.nick.wood.graphics_library_3d.input.Action;
+import com.nick.wood.game_control.input.Action;
 
 public class RigidBodyActionAction implements Action {
 

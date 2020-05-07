@@ -1,9 +1,7 @@
 package com.nick.wood.space_game.game.controls;
 
-import com.nick.wood.graphics_library_3d.input.Control;
-import com.nick.wood.maths.objects.matrix.Matrix4d;
-import com.nick.wood.maths.objects.vector.Vec;
-import com.nick.wood.maths.objects.vector.Vec3d;
+
+import com.nick.wood.game_control.input.Control;
 
 import java.util.UUID;
 

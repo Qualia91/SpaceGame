@@ -1,10 +1,11 @@
 package com.nick.wood.space_game.game.controls;
 
-import com.nick.wood.graphics_library_3d.input.Control;
+import com.nick.wood.game_control.input.Control;
 import com.nick.wood.maths.objects.vector.Vec3d;
 import com.nick.wood.physics.rigid_body_dynamics_verbose.RigidBody;
 
 import java.util.HashMap;
+import java.util.Map;
 import java.util.UUID;
 
 public class RigidBodyControl implements Control {
@@ -98,5 +99,19 @@ public class RigidBodyControl implements Control {
 	public void apply(RigidBody rigidBody) {
 		rigidBody.addForce(rigidBody.getRotation().toMatrix().rotate(force));
 		rigidBody.addTorque(rigidBody.getRotation().toMatrix().rotate(torque));
+	}
+
+	public void preformAction(RigidBody rigidBody, RigidBodyActionEnum rigidBodyActionEnum) {
+		switch (rigidBodyActionEnum) {
+			case SLOW_DOWN -> rigidBody.slowDown();
+		}
+	}
+
+	public void preformActions(RigidBody rigidBody) {
+		for (Map.Entry<RigidBodyActionEnum, Boolean> rigidBodyActionEnumBooleanEntry : actions.entrySet()) {
+			if (rigidBodyActionEnumBooleanEntry.getValue()) {
+				preformAction(rigidBody, rigidBodyActionEnumBooleanEntry.getKey());
+			}
+		}
 	}
 }

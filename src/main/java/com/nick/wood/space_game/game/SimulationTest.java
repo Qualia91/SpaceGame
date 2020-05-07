@@ -1,8 +1,9 @@
 package com.nick.wood.space_game.game;
 
-import com.nick.wood.graphics_library_3d.Material;
-import com.nick.wood.graphics_library_3d.input.Control;
-import com.nick.wood.graphics_library_3d.input.Inputs;
+import com.nick.wood.game_control.input.Control;
+import com.nick.wood.graphics_library_3d.input.DirectCameraController;
+import com.nick.wood.graphics_library_3d.input.GraphicsLibraryInput;
+import com.nick.wood.graphics_library_3d.input.LWJGLGameControlManager;
 import com.nick.wood.graphics_library_3d.lighting.PointLight;
 import com.nick.wood.graphics_library_3d.lighting.SpotLight;
 import com.nick.wood.graphics_library_3d.objects.Camera;
@@ -18,11 +19,11 @@ import com.nick.wood.physics.rigid_body_dynamics_verbose.RigidBody;
 import com.nick.wood.physics.rigid_body_dynamics_verbose.RigidBodyType;
 import com.nick.wood.physics.rigid_body_dynamics_verbose.forces.GravityBasic;
 import com.nick.wood.space_game.game.components.HudController;
+import com.nick.wood.space_game.game.controls.ExternalInput;
+import com.nick.wood.space_game.game.controls.HlaGameControlManager;
 import com.nick.wood.space_game.game.controls.RigidBodyControl;
 import com.nick.wood.physics.rigid_body_dynamics_verbose.forces.Drag;
 import com.nick.wood.physics.rigid_body_dynamics_verbose.forces.Force;
-import com.nick.wood.space_game.game.game_objects.GameObjectBuilder;
-import com.nick.wood.space_game.game.game_objects.GameObjectFactory;
 
 import java.util.*;
 import java.util.concurrent.ExecutionException;
@@ -55,7 +56,7 @@ class SimulationTest {
 
 		SceneGraph lightRootObject = new SceneGraph();
 
-		Inputs inputs = new Inputs();
+		GraphicsLibraryInput graphicsLibraryInput = new GraphicsLibraryInput();
 
 		HashMap<UUID, SceneGraph> rootGameObjectHashMap = new HashMap<>();
 
@@ -67,8 +68,10 @@ class SimulationTest {
 		rootGameObjectHashMap.put(UUID.randomUUID(), lightRootObject);
 
 		SimulationInterface simulation = new com.nick.wood.physics.rigid_body_dynamics_verbose.Simulation(rigidBodies);
-
-		Game game = new Game(1000, 800, simulation, true, true, rootGameObjectHashMap, inputs);
+		Game game = new Game(1000, 800, simulation, rootGameObjectHashMap, graphicsLibraryInput);
+		Control cameraViewControl = new DirectCameraController(camera, true, false);
+		LWJGLGameControlManager lwjglGameControlManagerCameraView = new LWJGLGameControlManager(graphicsLibraryInput, cameraViewControl);
+		game.addController(lwjglGameControlManagerCameraView);
 
 		ExecutorService executor = Executors.newFixedThreadPool(8);
 
@@ -110,7 +113,7 @@ class SimulationTest {
 		Camera camera = new Camera(new Vec3f(0.0f, 0.0f, 10.0f), new Vec3f(0.0f, 0.0f, 0.0f), 0.5f, 0.1f);
 		CameraSceneGraph cameraGameObject = new CameraSceneGraph(cameraRootObject, camera, CameraType.PRIMARY);
 
-		Inputs inputs = new Inputs();
+		GraphicsLibraryInput graphicsLibraryInput = new GraphicsLibraryInput();
 
 		HashMap<UUID, SceneGraph> rootGameObjectHashMap = new HashMap<>();
 
@@ -126,8 +129,10 @@ class SimulationTest {
 		rootGameObjectHashMap.put(UUID.randomUUID(), lightRootObject);
 
 		SimulationInterface simulation = new com.nick.wood.physics.rigid_body_dynamics_verbose.Simulation(rigidBodies);
-
-		Game game = new Game(1000, 800, simulation, true, true, rootGameObjectHashMap, inputs);
+		Game game = new Game(1000, 800, simulation, rootGameObjectHashMap, graphicsLibraryInput);
+		Control cameraViewControl = new DirectCameraController(camera, true, false);
+		LWJGLGameControlManager lwjglGameControlManagerCameraView = new LWJGLGameControlManager(graphicsLibraryInput, cameraViewControl);
+		game.addController(lwjglGameControlManagerCameraView);
 
 		ExecutorService executor = Executors.newFixedThreadPool(4);
 
@@ -218,11 +223,14 @@ class SimulationTest {
 		//createLights(lightRootObject);
 		//rootGameObjectHashMap.put(UUID.randomUUID(), lightRootObject);
 
-		Inputs inputs = new Inputs();
+		GraphicsLibraryInput graphicsLibraryInput = new GraphicsLibraryInput();
 
 		SimulationInterface simulation = new com.nick.wood.physics.rigid_body_dynamics_verbose.Simulation(rigidBodies);
 
-		Game game = new Game(1000, 800, simulation, true, true, rootGameObjectHashMap, inputs);
+		Game game = new Game(1000, 800, simulation, rootGameObjectHashMap, graphicsLibraryInput);
+		Control cameraViewControl = new DirectCameraController(camera, true, false);
+		LWJGLGameControlManager lwjglGameControlManagerCameraView = new LWJGLGameControlManager(graphicsLibraryInput, cameraViewControl);
+		game.addController(lwjglGameControlManagerCameraView);
 
 		ExecutorService executor = Executors.newFixedThreadPool(4);
 
@@ -252,28 +260,29 @@ class SimulationTest {
 		HashMap<UUID, SceneGraph> rootGameObjectHashMap = new HashMap<>();
 
 
-		RigidBodyControl control = null;
-		for (RigidBody rigidBody : rigidBodies) {
-			SceneGraph rootGameObject = convertToGameObject(rigidBody, "/textures/white.png");
-			TransformSceneGraph transformGameObjectLaser = (TransformSceneGraph) rootGameObject.getSceneGraphNodeData().getChildren().get(0);
-			createLaserUnderTransform(new Vec3f(1.0f, 1.0f, 1.0f), Vec3f.ZERO, transformGameObjectLaser);
+		SceneGraph rootGameObject = convertToGameObject(rigidBodyCube, "/textures/white.png");
+		TransformSceneGraph transformGameObjectLaser = (TransformSceneGraph) rootGameObject.getSceneGraphNodeData().getChildren().get(0);
+		createLaserUnderTransform(new Vec3f(1.0f, 1.0f, 1.0f), Vec3f.ZERO, transformGameObjectLaser);
 
-			control = new RigidBodyControl(100 * rigidBody.getMass(), 1 * Math.sqrt(rigidBody.getMass()), rigidBody.getUuid());
+		RigidBodyControl control = new RigidBodyControl(100 * rigidBodyCube.getMass(), 1 * Math.sqrt(rigidBodyCube.getMass()), rigidBodyCube.getUuid());
 
-			Camera camera = new Camera(new Vec3f(-5.0f, 0.0f, 1.0f), new Vec3f(0.0f, 0.0f, 0.0f), 0.5f, 0.1f);
-			CameraSceneGraph cameraGameObject = new CameraSceneGraph(transformGameObjectLaser, camera, CameraType.PRIMARY);
+		Camera camera = new Camera(new Vec3f(-5.0f, 0.0f, 1.0f), new Vec3f(0.0f, 0.0f, 0.0f), 0.5f, 0.1f);
+		CameraSceneGraph cameraGameObject = new CameraSceneGraph(transformGameObjectLaser, camera, CameraType.PRIMARY);
 
-			rootGameObjectHashMap.put(rigidBody.getUuid(), rootGameObject);
-		}
+		rootGameObjectHashMap.put(rigidBodyCube.getUuid(), rootGameObject);
 
 		//// Arena
 		createArena(rootGameObjectHashMap, rigidBodies, 100, forces);
 
-		Inputs inputs = new Inputs();
+		GraphicsLibraryInput graphicsLibraryInput = new GraphicsLibraryInput();
 
 		SimulationInterface simulation = new com.nick.wood.physics.rigid_body_dynamics_verbose.Simulation(rigidBodies);
 
-		Game game = new Game(1000, 800, simulation, false, false, rootGameObjectHashMap, inputs);
+		Game game = new Game(1000, 800, simulation, rootGameObjectHashMap, graphicsLibraryInput);
+
+		Control cameraViewControl = new DirectCameraController(camera, true, false);
+		LWJGLGameControlManager lwjglGameControlManagerCameraView = new LWJGLGameControlManager(graphicsLibraryInput, cameraViewControl);
+		game.addController(lwjglGameControlManagerCameraView);
 
 		ExecutorService executor = Executors.newFixedThreadPool(4);
 
@@ -312,7 +321,7 @@ class SimulationTest {
 
 		SceneGraph lightRootObject = new SceneGraph();
 
-		Inputs inputs = new Inputs();
+		GraphicsLibraryInput graphicsLibraryInput = new GraphicsLibraryInput();
 
 		HashMap<UUID, SceneGraph> rootGameObjectHashMap = new HashMap<>();
 
@@ -330,7 +339,11 @@ class SimulationTest {
 
 		SimulationInterface simulation = new com.nick.wood.physics.rigid_body_dynamics_verbose.Simulation(rigidBodies);
 
-		Game game = new Game(1000, 800, simulation, true, true, rootGameObjectHashMap, inputs);
+		Game game = new Game(1000, 800, simulation, rootGameObjectHashMap, graphicsLibraryInput);
+
+		Control cameraViewControl = new DirectCameraController(camera, true, false);
+		LWJGLGameControlManager lwjglGameControlManagerCameraView = new LWJGLGameControlManager(graphicsLibraryInput, cameraViewControl);
+		game.addController(lwjglGameControlManagerCameraView);
 
 		ExecutorService executor = Executors.newFixedThreadPool(4);
 
@@ -383,7 +396,7 @@ class SimulationTest {
 
 		SceneGraph lightRootObject = new SceneGraph();
 
-		Inputs inputs = new Inputs();
+		GraphicsLibraryInput graphicsLibraryInput = new GraphicsLibraryInput();
 
 		HashMap<UUID, SceneGraph> rootGameObjectHashMap = new HashMap<>();
 
@@ -401,8 +414,11 @@ class SimulationTest {
 
 		SimulationInterface simulation = new com.nick.wood.physics.rigid_body_dynamics_verbose.Simulation(rigidBodies);
 
-		Game game = new Game(1200, 1000, simulation, false, false, rootGameObjectHashMap, inputs);
-		game.setController(control);
+		Game game = new Game(1400, 900, simulation, rootGameObjectHashMap, graphicsLibraryInput);
+
+		LWJGLGameControlManager lwjglGameControlManagerCameraView = new LWJGLGameControlManager(graphicsLibraryInput, control);
+		game.addController(lwjglGameControlManagerCameraView);
+
 		//game.addHudController(hudController);
 
 		ExecutorService executor = Executors.newFixedThreadPool(4);
@@ -441,7 +457,7 @@ class SimulationTest {
 		RigidBody floorRigidBody1 = new RigidBody(floorUUID1, 100, new Vec3d(50.0, 50.0, 1.0), new Vec3d(0.0, -20.0, -10.0), Quaternion.RotationY(0.0), Vec3d.ZERO, Vec3d.ZERO, RigidBodyType.CUBOID, forces2);
 		rigidBodies.add(floorRigidBody1);
 
-		Inputs inputs = new Inputs();
+		GraphicsLibraryInput graphicsLibraryInput = new GraphicsLibraryInput();
 
 		SceneGraph cameraRootObject = new SceneGraph();
 		Camera camera = new Camera(new Vec3f(-10.0f, 0.0f, 10.0f), new Vec3f(0.0f, 0.0f, 0.0f), 0.5f, 0.1f);
@@ -462,7 +478,11 @@ class SimulationTest {
 
 		SimulationInterface simulation = new com.nick.wood.physics.rigid_body_dynamics_verbose.Simulation(rigidBodies);
 
-		Game game = new Game(1000, 800, simulation, true, true, rootGameObjectHashMap, inputs);
+		Game game = new Game(1000, 800, simulation, rootGameObjectHashMap, graphicsLibraryInput);
+
+		Control cameraViewControl = new DirectCameraController(camera, true, false);
+		LWJGLGameControlManager lwjglGameControlManagerCameraView = new LWJGLGameControlManager(graphicsLibraryInput, cameraViewControl);
+		game.addController(lwjglGameControlManagerCameraView);
 
 		ExecutorService executor = Executors.newFixedThreadPool(4);
 
@@ -484,22 +504,15 @@ class SimulationTest {
 		forces.add(new Drag(-0.1));
 
 		// Arena
-		createArena(rootGameObjectHashMap, rigidBodies, 1000, forces);
+		createArena(rootGameObjectHashMap, rigidBodies, 100, forces);
 
-		// ball
-		UUID uuid = UUID.randomUUID();
-		toRender.add(uuid);
-		Vec3d mom = Vec3d.ZERO;
-		Vec3d angMom = Vec3d.Z;
-		RigidBody rigidBodyBall = new RigidBody(uuid, 1, new Vec3d(5, 5, 5), new Vec3d(0, 0, 0), new Quaternion(1.0, 0.0, 0.0, 0.0), mom, angMom, RigidBodyType.SPHERE, forces);
-		rigidBodies.add(rigidBodyBall);
-		rootGameObjectHashMap.put(uuid, convertToGameObject(rigidBodyBall, "/textures/mars.jpg"));
+		UUID ballUUID = createBall(rootGameObjectHashMap, rigidBodies, forces, toRender);
 
 		// player
 		UUID playerUUID = UUID.randomUUID();
 		double playerMass = 10;
-		RigidBody playerRigidBody = new RigidBody(playerUUID, playerMass, new Vec3d(1.0, 1.0, 1.0), new Vec3d(-40, 0, 0), new Quaternion(1.0, 0.0, 0.0, 0.0), Vec3d.ZERO, Vec3d.ZERO, RigidBodyType.SPHERE, forces);
-		SceneGraph rootGameObject = convertToGameObjectDragon(playerRigidBody, "/textures/white.png");
+		RigidBody playerRigidBody = new RigidBody(playerUUID, playerMass, new Vec3d(4.0, 2.0, 1.0), new Vec3d(-40, 0, 0), new Quaternion(1.0, 0.0, 0.0, 0.0), Vec3d.ZERO, Vec3d.ZERO, RigidBodyType.CUBOID, forces);
+		SceneGraph rootGameObject = convertToGameObjectCuboid(playerRigidBody, "/textures/spaceShipTexture.jpg");
 		TransformSceneGraph transformGameObjectLaser = (TransformSceneGraph) rootGameObject.getSceneGraphNodeData().getChildren().get(0);
 		createLaserUnderTransform(new Vec3f(1.0f, 1.0f, 1.0f), Vec3f.ZERO, transformGameObjectLaser);
 		rigidBodies.add(playerRigidBody);
@@ -512,14 +525,25 @@ class SimulationTest {
 		rootGameObjectHashMap.put(playerUUID, rootGameObject);
 
 		// controls
-		Inputs inputs = new Inputs();
-		Control control = new RigidBodyControl(100 * playerMass, 1 * Math.sqrt(playerMass), playerUUID);
+		GraphicsLibraryInput graphicsLibraryInput = new GraphicsLibraryInput();
+		Control rigidBodyControl = new RigidBodyControl(100 * playerMass, 50, playerUUID);
+		Control ballControl = new RigidBodyControl(1, 50, ballUUID);
+		Control cameraViewControl = new DirectCameraController(camera, true, false);
 
 		// sim
 		SimulationInterface simulation = new com.nick.wood.physics.rigid_body_dynamics_verbose.Simulation(rigidBodies);
 
-		Game game = new Game(1000, 800, simulation, true, false, rootGameObjectHashMap, inputs);
-		game.setController(control);
+		Game game = new Game(1400, 1200, simulation, rootGameObjectHashMap, graphicsLibraryInput);
+
+		LWJGLGameControlManager lwjglGameControlManagerRigidBody = new LWJGLGameControlManager(graphicsLibraryInput, rigidBodyControl);
+		LWJGLGameControlManager lwjglGameControlManagerCameraView = new LWJGLGameControlManager(graphicsLibraryInput, cameraViewControl);
+
+		ExternalInput externalInput = new ExternalInput();
+		HlaGameControlManager hlaGameControlManager = new HlaGameControlManager(externalInput, ballControl);
+
+		game.addController(lwjglGameControlManagerRigidBody);
+		game.addController(lwjglGameControlManagerCameraView);
+		game.addController(hlaGameControlManager);
 		game.addHudController(hudController);
 
 		ExecutorService executor = Executors.newFixedThreadPool(4);
@@ -531,6 +555,52 @@ class SimulationTest {
 
 		// closes executor service
 		executor.shutdown();
+	}
+
+	private UUID createBall(HashMap<UUID, SceneGraph> rootGameObjectHashMap, ArrayList<RigidBody> rigidBodies, ArrayList<Force> forces, ArrayList<UUID> toRender) {
+
+		// ball
+		UUID uuid = UUID.randomUUID();
+		toRender.add(uuid);
+		Vec3d mom = Vec3d.ZERO;
+		Vec3d angMom = Vec3d.Z;
+		RigidBody rigidBodyBall = new RigidBody(uuid, 1, new Vec3d(5, 5, 5), new Vec3d(0, 0, 0), new Quaternion(1.0, 0.0, 0.0, 0.0), mom, angMom, RigidBodyType.SPHERE, forces);
+		rigidBodies.add(rigidBodyBall);
+
+		SceneGraph rootObject = new SceneGraph();
+
+		Transform transform = new Transform(
+				(Vec3f) rigidBodyBall.getOrigin().toVecf(),
+				Vec3f.ONE,
+				rigidBodyBall.getRotation().toMatrix().toMatrix4f()
+		);
+
+		TransformSceneGraph transformGameObject = new TransformSceneGraph(rootObject, transform);
+
+		MeshBuilder meshBuilder = new MeshBuilder();
+		meshBuilder.setTriangleNumber(10)
+				.setMeshType(MODEL)
+				.setTransform(Matrix4f.Transform(Vec3f.ZERO, Matrix4f.Identity, Vec3f.ONE.scale(5 * 0.4f)))
+				.setTexture("/textures/mars.jpg");
+
+		MeshSceneGraph meshGameObject = new MeshSceneGraph(
+				transformGameObject,
+				meshBuilder.build()
+		);
+
+		MeshObject meshGroupLight = new MeshBuilder()
+				.setTriangleNumber(10)
+				.setTransform(Matrix4f.Transform(Vec3f.ZERO, Matrix4f.Identity, Vec3f.ONE.scale(0.1f)))
+				.build();
+
+		
+		createLightUnderTransform(new Vec3f(1.0f, 1.0f, 1.0f), Vec3f.Z.scale(2.6f), meshGroupLight, transformGameObject, 1);
+
+
+		rootGameObjectHashMap.put(uuid, rootObject);
+
+		return uuid;
+
 	}
 
 	private void createArena(HashMap<UUID, SceneGraph> rootGameObject, ArrayList<RigidBody> rigidBodies, int width, ArrayList<Force> forces) {
@@ -549,43 +619,55 @@ class SimulationTest {
 				forces
 		);
 		rigidBodies.add(rigidBody);
-		MeshObject arenaMesh = new MeshBuilder().setInvertedNormals(true).setTexture("/textures/2k_neptune.jpg").build();
-		Transform transform = new Transform(Vec3f.ZERO, new Vec3f(width, width, width), Matrix4f.Identity);
+		MeshObject arenaMesh = new MeshBuilder()
+				.setMeshType(MODEL)
+				.setInvertedNormals(true)
+				.setTexture("/textures/2k_neptune.jpg")
+				.setTransform(Matrix4f.Transform(Vec3f.ZERO, Matrix4f.Identity, Vec3f.ONE.scale(width * 0.4f)))
+		.build();
+		Transform transform = new Transform(Vec3f.ZERO, Vec3f.ONE, Matrix4f.Identity);
 
 		TransformSceneGraph transformSceneGraph = new TransformSceneGraph(sceneGraph, transform);
 		MeshSceneGraph meshSceneGraph = new MeshSceneGraph(transformSceneGraph, arenaMesh);
 
-		MeshBuilder meshBuilder = new MeshBuilder()
-				.setTriangleNumber(5)
-				.setInvertedNormals(true);
-		MeshObject meshGroupLight = meshBuilder.build();
-		createLightUnderTransform(new Vec3f(1.0f, 0.0f, 0.0f), Vec3f.Z.scale(0.30f), meshGroupLight, transformSceneGraph, width);
-		createLightUnderTransform(new Vec3f(0.0f, 1.0f, 0.0f), Vec3f.Z.scale(-0.30f), meshGroupLight, transformSceneGraph, width);
-		createLightUnderTransform(new Vec3f(0.0f, 0.0f, 1.0f), Vec3f.X.scale(0.30f), meshGroupLight, transformSceneGraph, width);
-		createLightUnderTransform(new Vec3f(1.0f, 1.0f, 0.0f), Vec3f.X.scale(-0.30f), meshGroupLight, transformSceneGraph, width);
-		createLightUnderTransform(new Vec3f(1.0f, 0.0f, 1.0f), Vec3f.Y.scale(0.30f), meshGroupLight, transformSceneGraph, width);
-		createLightUnderTransform(new Vec3f(0.0f, 1.0f, 1.0f), Vec3f.Y.scale(-0.30f), meshGroupLight, transformSceneGraph, width);
+		MeshObject meshGroupLight = new MeshBuilder()
+				.setTriangleNumber(10)
+				.setInvertedNormals(true)
+				.setTransform(Matrix4f.Transform(Vec3f.ZERO, Matrix4f.Identity, Vec3f.ONE.scale(0.1f)))
+		.build();
+
+		float posOfLights = 45f;
+
+		createLightUnderTransform(new Vec3f(1.0f, 0.0f, 0.0f), Vec3f.Z.scale( posOfLights), meshGroupLight, transformSceneGraph, 10);
+		createLightUnderTransform(new Vec3f(0.0f, 1.0f, 0.0f), Vec3f.Z.scale(-posOfLights), meshGroupLight, transformSceneGraph, 10);
+		createLightUnderTransform(new Vec3f(0.0f, 0.0f, 1.0f), Vec3f.X.scale( posOfLights), meshGroupLight, transformSceneGraph, 10);
+		createLightUnderTransform(new Vec3f(1.0f, 1.0f, 0.0f), Vec3f.X.scale(-posOfLights), meshGroupLight, transformSceneGraph, 10);
+		createLightUnderTransform(new Vec3f(1.0f, 0.0f, 1.0f), Vec3f.Y.scale( posOfLights), meshGroupLight, transformSceneGraph, 10);
+		createLightUnderTransform(new Vec3f(0.0f, 1.0f, 1.0f), Vec3f.Y.scale(-posOfLights), meshGroupLight, transformSceneGraph, 10);
 		rootGameObject.put(uuid, sceneGraph);
 
 	}
 
-	public SceneGraph convertToGameObjectDragon(RigidBody rigidBody, String texture) {
+	public SceneGraph convertToGameObjectCuboid(RigidBody rigidBody, String texture) {
 
 		SceneGraph rootObject = new SceneGraph();
 
 		Transform transform = new Transform(
 				(Vec3f) rigidBody.getOrigin().toVecf(),
-				(Vec3f) rigidBody.getDimensions().toVecf(),
+				Vec3f.ONE,
 				rigidBody.getRotation().toMatrix().toMatrix4f()
 		);
 
 		TransformSceneGraph transformGameObject = new TransformSceneGraph(rootObject, transform);
 
-		Matrix4f matrix4f = Matrix4f.Transform(Vec3f.ZERO, Matrix4f.Rotation(-90, Vec3f.X).multiply(Matrix4f.Rotation(180, Vec3f.Z)), Vec3f.ONE.scale(0.1f));
+		//Matrix4f matrix4f = Matrix4f.Transform(Vec3f.ZERO, Matrix4f.Rotation(-90, Vec3f.X).multiply(Matrix4f.Rotation(180, Vec3f.Z)), Vec3f.ONE);
+		Matrix4f matrix4f = Matrix4f.Transform(Vec3f.ZERO, Matrix4f.Rotation(-90, Vec3f.X), Vec3f.ONE);
+		//Matrix4f matrix4f = Matrix4f.Transform(Vec3f.ZERO, Matrix4f.Identity, (Vec3f) rigidBody.getDimensions().toVecf());
 
 		MeshBuilder meshBuilder = new MeshBuilder()
+				//.setMeshType(CUBOID)
 				.setMeshType(MODEL)
-				.setTriangleNumber(5)
+				.setModelFile("D:\\Software\\Programming\\projects\\Blender\\spaceShips\\4b2b1.obj")
 				.setTexture(texture)
 				.setTransform(matrix4f);
 		MeshObject meshObject = meshBuilder.build();
@@ -675,13 +757,13 @@ class SimulationTest {
 		LightSceneGraph lightGameObject = new LightSceneGraph(transformGameObject1, light);
 	}
 
-	private void createLightUnderTransform(Vec3f colour, Vec3f pos, MeshObject meshGroupLight, TransformSceneGraph transformGameObject, float intensity) {
+	private void createLightUnderTransform(Vec3f colour, Vec3f pos, MeshObject meshGroupLight, SceneGraphNode transformGameObject, float intensity) {
 		PointLight light = new PointLight(
 				colour,
 				intensity);
 		Transform lightGameObjectTransform = new Transform(
 				pos,
-				Vec3f.ONE.scale(0.001f),
+				Vec3f.ONE,
 				Matrix4f.Identity
 		);
 
