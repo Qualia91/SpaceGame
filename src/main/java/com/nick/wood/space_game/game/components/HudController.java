@@ -1,10 +1,10 @@
 package com.nick.wood.space_game.game.components;
 
-import com.nick.wood.graphics_library_3d.lighting.PointLight;
-import com.nick.wood.graphics_library_3d.objects.Transform;
-import com.nick.wood.graphics_library_3d.objects.mesh_objects.MeshBuilder;
-import com.nick.wood.graphics_library_3d.objects.scene_graph_objects.*;
-import com.nick.wood.graphics_library_3d.objects.mesh_objects.MeshObject;
+import com.nick.wood.graphics_library.lighting.PointLight;
+import com.nick.wood.graphics_library.objects.Transform;
+import com.nick.wood.graphics_library.objects.mesh_objects.MeshBuilder;
+import com.nick.wood.graphics_library.objects.scene_graph_objects.*;
+import com.nick.wood.graphics_library.objects.mesh_objects.MeshObject;
 import com.nick.wood.maths.objects.matrix.Matrix4f;
 import com.nick.wood.maths.objects.vector.Vec3d;
 import com.nick.wood.maths.objects.vector.Vec3f;
@@ -14,7 +14,7 @@ import com.nick.wood.space_game.game.Hud;
 import java.util.ArrayList;
 import java.util.UUID;
 
-import static com.nick.wood.graphics_library_3d.objects.scene_graph_objects.RenderObjectType.TRANSFORM;
+import static com.nick.wood.graphics_library.objects.scene_graph_objects.RenderObjectType.TRANSFORM;
 
 public class HudController {
 	private static final float MAX_DIST  = 1000.0f;

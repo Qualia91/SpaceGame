@@ -3,12 +3,12 @@ package com.nick.wood.space_game.game;
 import com.nick.wood.game_control.input.Control;
 import com.nick.wood.game_control.input.ControlManager;
 import com.nick.wood.game_control.input.Input;
-import com.nick.wood.graphics_library_3d.Window;
-import com.nick.wood.graphics_library_3d.input.DirectCameraController;
-import com.nick.wood.graphics_library_3d.input.LWJGLGameControlManager;
-import com.nick.wood.graphics_library_3d.input.GraphicsLibraryInput;
-import com.nick.wood.graphics_library_3d.objects.Camera;
-import com.nick.wood.graphics_library_3d.objects.scene_graph_objects.*;
+import com.nick.wood.graphics_library.Window;
+import com.nick.wood.graphics_library.input.DirectCameraController;
+import com.nick.wood.graphics_library.input.LWJGLGameControlManager;
+import com.nick.wood.graphics_library.input.GraphicsLibraryInput;
+import com.nick.wood.graphics_library.objects.Camera;
+import com.nick.wood.graphics_library.objects.scene_graph_objects.*;
 import com.nick.wood.maths.objects.vector.Vec3d;
 import com.nick.wood.maths.objects.vector.Vec3f;
 import com.nick.wood.physics.Body;
@@ -28,7 +28,6 @@ public class Game implements Runnable {
 	private double simHerts = 60;
 	private final Window window;
 	private final HashMap<UUID, SceneGraph> rootGameObjects;
-	private final GraphicsLibraryInput graphicsLibraryInput;
 	private ArrayList<ControlManager<? extends Input>> controlManagers = new ArrayList<>();
 	private HudController hudController;
 	private UUID cameraUUID;
@@ -36,17 +35,14 @@ public class Game implements Runnable {
 	public Game(int width,
 	            int height,
 	            SimulationInterface simulation,
-	            HashMap<UUID, SceneGraph> rootGameObjects,
-	            GraphicsLibraryInput graphicsLibraryInput) {
+	            HashMap<UUID, SceneGraph> rootGameObjects) {
 
 		this.rootGameObjects = rootGameObjects;
-		this.graphicsLibraryInput = graphicsLibraryInput;
 		this.simulation = simulation;
 		this.window = new Window(
 				width,
 				height,
-				"",
-				graphicsLibraryInput);
+				"");
 
 	}
 
@@ -97,7 +93,7 @@ public class Game implements Runnable {
 
 			deltaSeconds += (now - lastTime) / 1000000000.0;
 
-			while (deltaSeconds >= 1 / simHerts) {
+			while (deltaSeconds >= 1.0 / simHerts) {
 
 				simulation.iterate(deltaSeconds);
 
@@ -178,7 +174,11 @@ public class Game implements Runnable {
 
 		}
 
-		window.destroy();
+		try {
+			window.close();
+		} catch (Exception exception) {
+			exception.printStackTrace();
+		}
 
 	}
 
@@ -206,5 +206,9 @@ public class Game implements Runnable {
 
 	public void addHudController(HudController hudController) {
 		this.hudController = hudController;
+	}
+
+	public Window getWindow() {
+		return window;
 	}
 }

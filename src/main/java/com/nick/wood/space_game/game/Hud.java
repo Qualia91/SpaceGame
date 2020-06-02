@@ -1,19 +1,19 @@
 package com.nick.wood.space_game.game;
 
-import com.nick.wood.graphics_library_3d.objects.Transform;
-import com.nick.wood.graphics_library_3d.objects.mesh_objects.MeshBuilder;
-import com.nick.wood.graphics_library_3d.objects.mesh_objects.TextItem;
-import com.nick.wood.graphics_library_3d.objects.scene_graph_objects.MeshSceneGraph;
-import com.nick.wood.graphics_library_3d.objects.scene_graph_objects.SceneGraph;
-import com.nick.wood.graphics_library_3d.objects.scene_graph_objects.SceneGraphNode;
-import com.nick.wood.graphics_library_3d.objects.scene_graph_objects.TransformSceneGraph;
+import com.nick.wood.graphics_library.objects.Transform;
+import com.nick.wood.graphics_library.objects.mesh_objects.MeshBuilder;
+import com.nick.wood.graphics_library.objects.mesh_objects.TextItem;
+import com.nick.wood.graphics_library.objects.scene_graph_objects.MeshSceneGraph;
+import com.nick.wood.graphics_library.objects.scene_graph_objects.SceneGraph;
+import com.nick.wood.graphics_library.objects.scene_graph_objects.SceneGraphNode;
+import com.nick.wood.graphics_library.objects.scene_graph_objects.TransformSceneGraph;
 import com.nick.wood.maths.objects.matrix.Matrix4f;
 import com.nick.wood.maths.objects.vector.Vec3f;
 
 import java.util.HashMap;
 import java.util.UUID;
 
-import static com.nick.wood.graphics_library_3d.objects.mesh_objects.MeshType.TEXT;
+import static com.nick.wood.graphics_library.objects.mesh_objects.MeshType.TEXT;
 
 public class Hud {
 

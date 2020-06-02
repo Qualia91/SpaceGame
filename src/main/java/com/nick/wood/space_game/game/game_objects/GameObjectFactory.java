@@ -1,6 +1,6 @@
 package com.nick.wood.space_game.game.game_objects;
 
-import com.nick.wood.graphics_library_3d.objects.scene_graph_objects.SceneGraph;
+import com.nick.wood.graphics_library.objects.scene_graph_objects.SceneGraph;
 import com.nick.wood.physics.rigid_body_dynamics_verbose.RigidBody;
 
 import java.util.ArrayList;
